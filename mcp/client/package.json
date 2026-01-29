@@ -1,0 +1,34 @@
+{
+  "name": "legal-case-analysis-ui",
+  "version": "1.0.0",
+  "description": "AI-Based Legal Case Classification & Analysis System - Desktop UI",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "package": "electron-builder"
+  },
+  "keywords": [
+    "legal",
+    "ai",
+    "electron",
+    "react"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
+  }
+}
