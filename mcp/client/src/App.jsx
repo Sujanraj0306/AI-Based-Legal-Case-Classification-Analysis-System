@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
+import CaseTypeSelector from './components/CaseTypeSelector';
 import CaseForm from './components/CaseForm';
+import AdvisoryForm from './components/AdvisoryForm';
 import ProgressIndicator from './components/ProgressIndicator';
 import ResultsView from './components/ResultsView';
+import AdvisoryResultsView from './components/AdvisoryResultsView';
 import './styles/App.css';
 import * as api from './services/api';
 
 function App() {
+     const [caseType, setCaseType] = useState('litigation'); // litigation or advisory
      const [currentStep, setCurrentStep] = useState('form'); // form, processing, results
      const [progress, setProgress] = useState({ step: 0, message: '' });
      const [results, setResults] = useState(null);
@@ -106,11 +110,54 @@ function App() {
           }
      };
 
+     const handleAnalyzeAdvisory = async (data) => {
+          try {
+               setCurrentStep('processing');
+               setError(null);
+
+               const { clientObjective, background, files, caseTitle } = data;
+
+               // Step 1: Analyze advisory
+               setProgress({ step: 1, message: 'Analyzing advisory request...' });
+               const response = await api.analyzeAdvisory(clientObjective, background, files, caseTitle);
+               const result = response.data;
+
+               if (result.status === 'error') {
+                    throw new Error(result.error || 'Advisory analysis failed');
+               }
+
+               // Extract results
+               const classification = result.steps?.classification || {};
+               const analysis = result.steps?.analysis?.analysis || '';
+               const report = result.steps?.report || {};
+
+               setResults({
+                    caseId: result.case_id,
+                    domain: classification.domain,
+                    analysis: analysis,
+                    report: report,
+                    summary: result.summary
+               });
+
+               setCurrentStep('results');
+
+          } catch (err) {
+               console.error('Advisory analysis error:', err);
+               setError(err.response?.data?.detail || err.message || 'An error occurred during advisory analysis');
+               setCurrentStep('form');
+          }
+     };
+
      const handleReset = () => {
           setCurrentStep('form');
           setProgress({ step: 0, message: '' });
           setResults(null);
           setError(null);
+     };
+
+     const handleCaseTypeChange = (newCaseType) => {
+          setCaseType(newCaseType);
+          handleReset();
      };
 
      return (
@@ -128,15 +175,32 @@ function App() {
                     )}
 
                     {currentStep === 'form' && (
-                         <CaseForm onAnalyze={handleAnalyze} />
+                         <>
+                              <CaseTypeSelector
+                                   caseType={caseType}
+                                   onCaseTypeChange={handleCaseTypeChange}
+                              />
+
+                              {caseType === 'litigation' && (
+                                   <CaseForm onAnalyze={handleAnalyze} />
+                              )}
+
+                              {caseType === 'advisory' && (
+                                   <AdvisoryForm onAnalyze={handleAnalyzeAdvisory} />
+                              )}
+                         </>
                     )}
 
                     {currentStep === 'processing' && (
                          <ProgressIndicator progress={progress} />
                     )}
 
-                    {currentStep === 'results' && (
+                    {currentStep === 'results' && caseType === 'litigation' && (
                          <ResultsView results={results} onReset={handleReset} />
+                    )}
+
+                    {currentStep === 'results' && caseType === 'advisory' && (
+                         <AdvisoryResultsView results={results} onReset={handleReset} />
                     )}
                </main>
           </div>

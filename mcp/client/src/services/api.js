@@ -63,4 +63,22 @@ export const generateReport = async (caseId, caseData, saveMarkdown = true) => {
      });
 };
 
+export const analyzeAdvisory = async (clientObjective, background, files, caseTitle) => {
+     const formData = new FormData();
+     formData.append('client_objective', clientObjective);
+     if (background) formData.append('background', background);
+     if (caseTitle) formData.append('case_title', caseTitle);
+     if (files && files.length > 0) {
+          files.forEach(file => {
+               formData.append('files', file);
+          });
+     }
+
+     return api.post('/analyze-advisory', formData, {
+          headers: {
+               'Content-Type': 'multipart/form-data',
+          },
+     });
+};
+
 export default api;

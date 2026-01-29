@@ -25,6 +25,7 @@ from tools.evidence_extractor_tool import evidence_extractor
 from tools.legal_analyzer_tool import legal_analyzer
 from tools.report_generator_tool import report_generator
 from orchestrator import case_orchestrator
+from advisory_orchestrator import advisory_orchestrator
 
 # Configure logging
 request_id_context: ContextVar[str] = ContextVar("request_id", default="system")
@@ -185,6 +186,46 @@ async def analyze_case(
         translate=translate,
         clean=clean,
         use_embeddings=use_embeddings
+    )
+    
+    return result
+
+
+# Advisory case analysis endpoint (TYPE-B)
+@app.post("/analyze-advisory")
+async def analyze_advisory(
+    client_objective: str = Form(...),
+    background: Optional[str] = Form(None),
+    files: Optional[List[UploadFile]] = File(None),
+    case_title: Optional[str] = Form(None)
+) -> Dict[str, Any]:
+    """
+    Pre-litigation advisory analysis pipeline.
+    
+    For cases where no FIR/litigation exists and client seeks preventive legal guidance.
+    
+    Pipeline:
+    1. Process uploaded documents
+    2. Preprocess text
+    3. Classify advisory domain (Property, Immigration, Business, etc.)
+    4. Retrieve relevant legal knowledge (RAG)
+    5. Generate advisory analysis with Gemini
+    6. Create advisory PDF report
+    
+    Args:
+        client_objective: Client's stated objective (required)
+        background: Background details (optional)
+        files: Supporting documents (optional)
+        case_title: Case title (optional)
+        
+    Returns:
+        Dict with complete advisory analysis and PDF report path
+    """
+    result = await advisory_orchestrator.analyze_advisory(
+        client_objective=client_objective,
+        background=background,
+        files=files,
+        case_title=case_title
     )
     
     return result
