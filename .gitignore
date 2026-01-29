@@ -34,10 +34,18 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Models (large files)
-mcp/server/models/*.bin
-mcp/server/models/*.pt
-mcp/server/models/*.pth
+# Models (large files) - EXCLUDED FROM GIT
+mcp/server/models/
+mcp/client/release/
+
+# ML Model files
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.safetensors
 
 # Generated documents
 mcp/documents/*/
@@ -48,6 +56,7 @@ mcp/documents/*/
 # Electron
 out/
 .webpack/
+release/
 
 # Testing
 .pytest_cache/
@@ -57,3 +66,8 @@ htmlcov/
 # Temporary files
 *.tmp
 *.bak
+
+# ChromaDB
+chroma_db/
+*.db
+*.sqlite
