@@ -68,20 +68,29 @@ class AdvisoryAnalyzer:
                 context
             )
             
-            # Generate analysis
-            response = self.model.generate_content(prompt)
-            analysis_text = response.text
-            
-            result = {
-                "analysis": analysis_text,
-                "domain": domain,
-                "generated_at": datetime.now().isoformat(),
-                "model_used": "gemini-1.5-flash",
-                "context_docs_count": len(retrieved_docs)
-            }
-            
-            logger.info("Advisory analysis generated successfully")
-            return result
+            # Generate analysis with timeout
+            try:
+                response = self.model.generate_content(
+                    prompt,
+                    request_options={"timeout": 30}
+                )
+                analysis_text = response.text
+                
+                result = {
+                    "analysis": analysis_text,
+                    "domain": domain,
+                    "generated_at": datetime.now().isoformat(),
+                    "model_used": "gemini-1.5-flash",
+                    "context_docs_count": len(retrieved_docs)
+                }
+                
+                logger.info("Advisory analysis generated successfully")
+                return result
+                
+            except Exception as api_error:
+                logger.error(f"Gemini API error: {str(api_error)}")
+                logger.info("Falling back to template-based analysis")
+                return self._fallback_analysis(client_objective, background, domain)
             
         except Exception as e:
             logger.error(f"Error generating advisory analysis: {str(e)}")

@@ -174,12 +174,37 @@ Please provide a comprehensive legal analysis in clear, structured paragraphs. U
             # Generate prompt
             prompt = self.generate_analysis_prompt(facts, sections, domain, evidence)
             
-            # Get analysis from Gemini
+            # Get analysis from Gemini with timeout
             logger.info("Requesting analysis from Gemini API...")
-            response = self.model.generate_content(prompt)
-            analysis_text = response.text.strip()
             
-            logger.info(f"Analysis generated ({len(analysis_text)} chars)")
+            # Configure request with timeout (30 seconds)
+            import asyncio
+            from concurrent.futures import TimeoutError as FuturesTimeoutError
+            
+            try:
+                # Set a reasonable timeout to prevent hanging
+                response = self.model.generate_content(
+                    prompt,
+                    request_options={"timeout": 30}
+                )
+                analysis_text = response.text.strip()
+                logger.info(f"Analysis generated ({len(analysis_text)} chars)")
+                
+            except (TimeoutError, FuturesTimeoutError, Exception) as api_error:
+                logger.error(f"Gemini API error: {str(api_error)}")
+                # Fall back to template-based analysis
+                logger.info("Falling back to template-based analysis")
+                analysis_text = self.generate_template_analysis(facts, sections, domain)
+                
+                return {
+                    "analysis": analysis_text,
+                    "method": "template_fallback",
+                    "domain": domain,
+                    "sections_analyzed": len(sections),
+                    "facts_length": len(facts),
+                    "has_evidence": evidence is not None,
+                    "warning": f"Gemini API unavailable: {str(api_error)[:100]}"
+                }
             
             # Structure the result
             result = {
@@ -205,11 +230,22 @@ Please provide a comprehensive legal analysis in clear, structured paragraphs. U
             
         except Exception as e:
             logger.error(f"Legal analysis error: {str(e)}")
-            return {
-                "analysis": f"Error during analysis: {str(e)}",
-                "method": "error",
-                "error": str(e)
-            }
+            # Fall back to template analysis on any error
+            try:
+                analysis_text = self.generate_template_analysis(facts, sections, domain)
+                return {
+                    "analysis": analysis_text,
+                    "method": "template_fallback",
+                    "domain": domain,
+                    "sections_analyzed": len(sections),
+                    "error": str(e)
+                }
+            except:
+                return {
+                    "analysis": f"Error during analysis: {str(e)}",
+                    "method": "error",
+                    "error": str(e)
+                }
     
     def generate_template_analysis(
         self,

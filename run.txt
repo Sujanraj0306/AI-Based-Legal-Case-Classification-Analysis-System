@@ -1,1 +1,15 @@
-./package_app.sh
+How to Run
+You continue to run it as you were:
+
+Terminal 1 (Backend):
+
+source venv/bin/activate
+python main.py
+
+Terminal 2 (Frontend App):
+
+npm run electron:dev
+
+(Or npm run electron if built)
+This launches the dedicated "Law Firm" styled application window.
+
